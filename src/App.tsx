@@ -1,34 +1,35 @@
-import { useState } from 'react';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import HomePage from './pages/HomePage';
-import AboutPage from './pages/AboutPage';
-import GalleryPage from './pages/GalleryPage';
-import ContactPage from './pages/ContactPage';
-import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
-import { Page, AdminUser } from './lib/types';
-import { getAdminSession } from './lib/adminAuth';
+import { useState } from 'react'
+import Navbar from './components/Navbar'
+import Footer from './components/Footer'
+import HomePage from './pages/HomePage'
+import AboutPage from './pages/AboutPage'
+import GalleryPage from './pages/GalleryPage'
+import ContactPage from './pages/ContactPage'
+import AdminLogin from './pages/AdminLogin'
+import AdminDashboard from './pages/AdminDashboard'
+import { Page, AdminUser } from './lib/types'
+import { getAdminSession } from './lib/adminAuth'
 
-const ADMIN_PAGES: Page[] = ['admin-login', 'admin-dashboard'];
+const ADMIN_PAGES: Page[] = ['admin-login', 'admin-dashboard']
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [admin, setAdmin] = useState<AdminUser | null>(getAdminSession);
+  const [currentPage, setCurrentPage] = useState<Page>('home')
+  // ✅ Call getAdminSession() instead of passing the function reference
+  const [admin, setAdmin] = useState<AdminUser | null>(getAdminSession())
 
   const handleNavigate = (page: Page) => {
     if (page === 'admin-dashboard' && !admin) {
-      setCurrentPage('admin-login');
-      return;
+      setCurrentPage('admin-login')
+      return
     }
-    setCurrentPage(page);
-  };
+    setCurrentPage(page)
+  }
 
   const handleLogin = (adminUser: AdminUser) => {
-    setAdmin(adminUser);
-  };
+    setAdmin(adminUser)
+  }
 
-  const isAdminPage = ADMIN_PAGES.includes(currentPage);
+  const isAdminPage = ADMIN_PAGES.includes(currentPage)
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -50,5 +51,5 @@ export default function App() {
       </main>
       {!isAdminPage && <Footer onNavigate={handleNavigate} />}
     </div>
-  );
+  )
 }
