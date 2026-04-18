@@ -35,7 +35,7 @@ export default function BookingModal({ date, onClose }: BookingModalProps) {
     fetchData();
   }, [date]);
 
-  // ✅ Fixed: parse YYYY-MM-DD manually to avoid UTC shift
+  // ✅ Fixed: parse YYYY-MM-DD manually to avoid UTC shift in Pakistan time zone
   const [year, month, day] = date.split('-').map(Number);
   const formattedDate = new Date(year, month - 1, day).toLocaleDateString('en-PK', {
     weekday: 'long',
