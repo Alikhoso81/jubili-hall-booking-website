@@ -35,14 +35,16 @@ export default function BookingModal({ date, onClose }: BookingModalProps) {
     fetchData();
   }, [date]);
 
-  // ✅ Fixed: parse YYYY-MM-DD manually to avoid UTC shift in Pakistan time zone
+  // ✅ Fixed: format date explicitly in Pakistan timezone
   const [year, month, day] = date.split('-').map(Number);
-  const formattedDate = new Date(year, month - 1, day).toLocaleDateString('en-PK', {
+  const jsDate = new Date(Date.UTC(year, month - 1, day)); // force UTC base
+  const formattedDate = new Intl.DateTimeFormat('en-PK', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  });
+    timeZone: 'Asia/Karachi', // force Pakistan timezone
+  }).format(jsDate);
 
   const buildWhatsAppMessage = (shift: 'day' | 'night') => {
     const msg = `Hello Jublii Group! I would like to book the ${shift} shift on ${formattedDate}. Please confirm availability.`;
