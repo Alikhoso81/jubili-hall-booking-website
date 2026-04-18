@@ -87,11 +87,6 @@ export default function Calendar({ onDateSelect, adminMode = false, refreshKey =
     return { bg: 'bg-amber-50 hover:bg-amber-100 cursor-pointer border border-amber-200', label: 'partial' };
   };
 
-  const handleDateClick = (day: number) => {
-    if (isPast(day) && !adminMode) return;
-    onDateSelect(getDateStr(day));
-  };
-
   const cells: (number | null)[] = [
     ...Array(firstDay).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
@@ -135,7 +130,7 @@ export default function Calendar({ onDateSelect, adminMode = false, refreshKey =
             return (
               <button
                 key={day}
-                onClick={() => handleDateClick(day)}
+                onClick={() => onDateSelect(getDateStr(day))}   // ✅ fixed: pass correct date string
                 disabled={isPast(day) && !adminMode}
                 className={`relative rounded-lg p-1.5 min-h-[52px] flex flex-col items-center transition-all duration-150 ${bg} ${isToday ? 'ring-2 ring-[#C9A84C]' : ''}`}
               >
