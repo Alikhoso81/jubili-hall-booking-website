@@ -24,8 +24,8 @@ export default function Calendar({ onDateSelect, adminMode = false, refreshKey =
 
   const fetchAvailability = useCallback(async () => {
     setLoading(true);
-    const startDate = new Date(year, month, 1).toISOString().split('T')[0];
-    const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+    const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(new Date(year, month + 1, 0).getDate()).padStart(2, '0')}`;
 
     const { data, error } = await supabase
       .from('bookings')
@@ -66,11 +66,11 @@ export default function Calendar({ onDateSelect, adminMode = false, refreshKey =
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+  // ✅ FIX: build date string manually (no UTC shift)
   const getDateStr = (day: number) => {
-    const d = new Date(year, month, day);
-    return d.toISOString().split('T')[0];
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
   const isPast = (day: number) => {
@@ -130,7 +130,7 @@ export default function Calendar({ onDateSelect, adminMode = false, refreshKey =
             return (
               <button
                 key={day}
-                onClick={() => onDateSelect(getDateStr(day))}   // ✅ fixed: pass correct date string
+                onClick={() => onDateSelect(getDateStr(day))}   // ✅ passes correct YYYY-MM-DD
                 disabled={isPast(day) && !adminMode}
                 className={`relative rounded-lg p-1.5 min-h-[52px] flex flex-col items-center transition-all duration-150 ${bg} ${isToday ? 'ring-2 ring-[#C9A84C]' : ''}`}
               >
@@ -146,27 +146,6 @@ export default function Calendar({ onDateSelect, adminMode = false, refreshKey =
               </button>
             );
           })}
-        </div>
-      </div>
-
-      <div className="px-4 pb-4 pt-2 flex flex-wrap gap-3 justify-center text-xs">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-green-200 border border-green-400" />
-          <span className="text-gray-500">Available</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-amber-200 border border-amber-400" />
-          <span className="text-gray-500">Partial</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-red-200 border border-red-400" />
-          <span className="text-gray-500">Fully Booked</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Sun className="w-3 h-3 text-green-500" />
-          <span className="text-gray-500">Day</span>
-          <Moon className="w-3 h-3 text-green-500" />
-          <span className="text-gray-500">Night</span>
         </div>
       </div>
     </div>

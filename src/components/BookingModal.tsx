@@ -35,15 +35,15 @@ export default function BookingModal({ date, onClose }: BookingModalProps) {
     fetchData();
   }, [date]);
 
-  // ✅ Fixed: format date explicitly in Pakistan timezone
+  // ✅ Format date explicitly in Pakistan timezone
   const [year, month, day] = date.split('-').map(Number);
-  const jsDate = new Date(Date.UTC(year, month - 1, day)); // force UTC base
+  const jsDate = new Date(Date.UTC(year, month - 1, day));
   const formattedDate = new Intl.DateTimeFormat('en-PK', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-    timeZone: 'Asia/Karachi', // force Pakistan timezone
+    timeZone: 'Asia/Karachi',
   }).format(jsDate);
 
   const buildWhatsAppMessage = (shift: 'day' | 'night') => {
