@@ -35,8 +35,12 @@ export default function BookingModal({ date, onClose }: BookingModalProps) {
     fetchData();
   }, [date]);
 
-  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  // ✅ Fixed: use raw date string, no timezone shift
+  const formattedDate = new Date(date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 
   const buildWhatsAppMessage = (shift: 'day' | 'night') => {
