@@ -74,8 +74,12 @@ BEGIN
   INSERT INTO public.staff (id, display_name, email)
   VALUES (
     NEW.id,
-    COALESCE(NULLIF(NEW.raw_user_meta_data->>'display_name', ''), split_part(NEW.email, '@', 1)),
-    NEW.email
+    COALESCE(
+      NULLIF(NEW.raw_user_meta_data->>'display_name', ''),
+      NULLIF(split_part(COALESCE(NEW.email, ''), '@', 1), ''),
+      'Staff'
+    ),
+    COALESCE(NEW.email, '')
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
@@ -91,8 +95,12 @@ CREATE TRIGGER on_auth_user_created
 INSERT INTO public.staff (id, display_name, email)
 SELECT
   u.id,
-  COALESCE(NULLIF(u.raw_user_meta_data->>'display_name', ''), split_part(u.email, '@', 1)),
-  u.email
+  COALESCE(
+    NULLIF(u.raw_user_meta_data->>'display_name', ''),
+    NULLIF(split_part(COALESCE(u.email, ''), '@', 1), ''),
+    'Staff'
+  ),
+  COALESCE(u.email, '')
 FROM auth.users u
 ON CONFLICT (id) DO NOTHING;
 
@@ -157,3 +165,12 @@ CREATE POLICY "Authenticated can delete bookings"
   ON bookings FOR DELETE
   TO authenticated
   USING (true);
+
+-- ============================================================
+-- 5. Table privileges
+-- ============================================================
+-- No public/anon access to any app table anymore.
+REVOKE ALL ON public.bookings FROM anon;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.bookings TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.staff TO authenticated;
