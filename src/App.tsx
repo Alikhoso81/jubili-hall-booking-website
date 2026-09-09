@@ -1,55 +1,17 @@
-import { useState } from 'react'
-import Navbar from './components/Navbar'
-import Footer from './components/Footer'
-import HomePage from './pages/HomePage'
-import AboutPage from './pages/AboutPage'
-import GalleryPage from './pages/GalleryPage'
-import ContactPage from './pages/ContactPage'
-import AdminLogin from './pages/AdminLogin'
-import AdminDashboard from './pages/AdminDashboard'
-import { Page, AdminUser } from './lib/types'
-import { getAdminSession } from './lib/adminAuth'
-
-const ADMIN_PAGES: Page[] = ['admin-login', 'admin-dashboard']
+import { useAuth } from './lib/auth';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('home')
-  // ✅ Call getAdminSession() instead of passing the function reference
-  const [admin, setAdmin] = useState<AdminUser | null>(getAdminSession())
+  const { user, loading } = useAuth();
 
-  const handleNavigate = (page: Page) => {
-    if (page === 'admin-dashboard' && !admin) {
-      setCurrentPage('admin-login')
-      return
-    }
-    setCurrentPage(page)
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0d1b0f] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#C9A84C] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
-  const handleLogin = (adminUser: AdminUser) => {
-    setAdmin(adminUser)
-  }
-
-  const isAdminPage = ADMIN_PAGES.includes(currentPage)
-
-  return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar currentPage={currentPage} onNavigate={handleNavigate} />
-      <main className="flex-1">
-        {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
-        {currentPage === 'about' && <AboutPage />}
-        {currentPage === 'gallery' && <GalleryPage />}
-        {currentPage === 'contact' && <ContactPage />}
-        {currentPage === 'admin-login' && (
-          <AdminLogin onNavigate={handleNavigate} onLogin={handleLogin} />
-        )}
-        {currentPage === 'admin-dashboard' && admin && (
-          <AdminDashboard admin={admin} onNavigate={handleNavigate} />
-        )}
-        {currentPage === 'admin-dashboard' && !admin && (
-          <AdminLogin onNavigate={handleNavigate} onLogin={handleLogin} />
-        )}
-      </main>
-      {!isAdminPage && <Footer onNavigate={handleNavigate} />}
-    </div>
-  )
+  return user ? <Dashboard /> : <Login />;
 }

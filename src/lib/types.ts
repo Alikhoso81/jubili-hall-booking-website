@@ -5,15 +5,19 @@ export interface Booking {
   customer_name: string;
   customer_phone: string;
   customer_email: string;
+  event_type: string;
+  total_amount: number;
+  advance_paid: number;
+  balance_due: number;
   notes: string;
-  booked_by_admin: string;
+  booked_by: string;
   created_at: string;
 }
 
-export interface AdminUser {
+export interface Staff {
   id: string;
-  username: string;
   display_name: string;
+  email: string;
 }
 
 export interface DayAvailability {
@@ -22,4 +26,13 @@ export interface DayAvailability {
   nightBooked: boolean;
 }
 
-export type Page = 'home' | 'about' | 'gallery' | 'contact' | 'admin-login' | 'admin-dashboard';
+export type Tab = 'calendar' | 'bookings' | 'add';
+
+export const EVENT_TYPES = [
+  'Wedding',
+  'Engagement',
+  'Reception',
+  'Birthday',
+  'Corporate',
+  'Other',
+] as const;
