@@ -1,55 +1,77 @@
-# Setup — admin-only Booking Manager
+# Setup — JUBLII Booking Manager
 
 Do these steps once, in order.
 
-## 1. Apply the database migration
+## 1. Install dependencies (needs Node.js 18+)
 
-1. Open your project at [supabase.com](https://supabase.com) → **SQL Editor**.
-2. Open a new query, paste the entire contents of
-   `supabase/migrations/20260909120000_admin_only_supabase_auth.sql`,
-   and click **Run**.
+```bash
+cd project
+npm install
+npm run typecheck   # should pass
+npm run dev         # http://localhost:5173
+```
 
-What it does:
+New packages in this build: `react-router-dom` (page navigation) and
+`recharts` (dashboard charts).
 
-- Removes the old `admin_users` table and its login RPC functions.
-- Adds a `staff` profile table linked to Supabase Auth. A trigger fills it
-  in automatically when you add a user (step 3).
-- Adds `event_type`, `total_amount`, `advance_paid`, and a generated
-  `balance_due` column to `bookings`; migrates the old `booked_by_admin`
-  values into a new `booked_by` column.
-- Removes public read access. Only signed-in users can read or change
-  bookings now.
-- Drops the 15-day auto-cleanup. Bookings are kept permanently.
+## 2. Apply the database migrations
 
-> The old default logins (`admin1` / `Admin@2024!` etc.) stop working after
-> this migration. You create real accounts in step 3.
+Supabase dashboard → **SQL Editor** → run these two files **in order**:
 
-## 2. Turn off public sign-ups
+1. `supabase/migrations/20260909120000_admin_only_supabase_auth.sql`
+   (Supabase Auth + the `staff` table — skip if you already ran it)
+2. `supabase/migrations/20260909140000_venue_management.sql`
+   (venues, the richer bookings model, charges, payments, company
+   settings, roles/permissions, invites)
 
-Supabase dashboard → **Authentication → Sign In / Providers → Email**:
+The second migration reshapes `bookings` (`date`→`event_date`,
+`shift`→`time_slot`, `customer_*`→`client_*`, adds `venue_id`, `status`,
+etc.), moves any existing money values into `charges` / `payments`, and
+creates a default **"Main Hall"** venue for existing bookings.
 
-- **Disable** "Allow new users to sign up" (only you should create accounts).
-- Optional: turn **off** "Confirm email" so new staff accounts work
-  immediately without an email link.
+## 3. Auth settings
 
-## 3. Create staff accounts
+Supabase dashboard → **Authentication**:
 
-Supabase dashboard → **Authentication → Users → Add user → Create new user**:
+- **Providers → Email:** turn **off** "Confirm email" (so new accounts work
+  right away), or leave it on if you want email verification.
+- **Sign-ups:** leave **enabled** — access is controlled by invites
+  (step 5). The very first account to sign up automatically becomes
+  **Admin**.
 
-- Enter an **email** and a **password** for the owner, then repeat for each
-  worker.
-- (Optional) To set a nice display name, expand **User Metadata** and add:
-  `{ "display_name": "Ali" }`. Otherwise the name is taken from the part of
-  the email before the `@`.
+## 4. Create the owner account
 
-Everyone you add has the same full access (add / edit / delete / export).
+- If you already created an account in the earlier setup, it was upgraded
+  to **Admin** by migration 2 — nothing to do.
+- Otherwise: Authentication → Users → **Add user** (email + password), or
+  just sign up on the app's login screen. First account = Admin.
 
-To remove someone's access later: delete their user here.
+## 5. Add your team (from inside the app)
 
-## 4. Deploy
+Sign in, then go to **Settings → Users → Add user**:
 
-The app builds to static files — deploy the `dist/` folder (Netlify, Vercel,
-Cloudflare Pages, etc.). Set the two environment variables on the host:
+1. Enter the person's **email**, name, and **role** (Admin / Manager /
+   Booker / Accountant).
+2. Send them the login-page link (the modal shows it with a Copy button).
+3. They sign up with that exact email → they get the role and permissions
+   automatically, and the "Pending verification" row turns into an active
+   member.
+
+Fine-tune any member's exact permissions later with **Assign role**, or
+switch them off with **Deactivate**.
+
+## 6. First run inside the app
+
+1. **Events → Venues** — rename "Main Hall" / add your other halls.
+2. **Settings → Company Settings** — business name, phone, tax rate, and
+   the Event type / Time slot lists.
+3. **Events → Booking Calendar** — tap a date to make your first booking.
+
+## Deploy
+
+Static build — deploy the `project/dist/` folder (Netlify / Vercel /
+Cloudflare Pages). The repo already has a SPA redirect in
+`dist/_redirects`. Set these env vars on the host:
 
 ```
 VITE_SUPABASE_URL=...
@@ -60,10 +82,11 @@ Build command: `npm run build` · Publish directory: `dist`
 
 ## Notes / follow-ups
 
-- **Free-tier pause:** a Supabase free project pauses after ~7 days of no
-  activity and needs a manual resume. For a low-traffic internal tool,
-  either upgrade to Pro when it goes live, or set up a daily keep-alive
-  ping.
-- **Rotate the exposed passwords:** the old `admin1..admin4` passwords are
-  in git history (`supabase/migrations/20260417113319_hall_booking_system.sql`).
-  They no longer work after migration, but don't reuse them.
+- **Permissions are enforced in the UI**, not yet in the database. Every
+  signed-in user can technically read/write the tables via the API. Next
+  step is per-permission RLS policies.
+- **Accounts, Inventory, Finance Vouchers, Financial Reports, Staff &
+  Payroll** are scaffolded ("Module in progress") — navigation,
+  permissions and layout are wired, the screens come next.
+- **Free-tier pause:** a Supabase free project pauses after ~7 days idle.
+  Upgrade to Pro or add a keep-alive ping when it goes live.
