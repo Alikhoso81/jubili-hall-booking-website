@@ -120,7 +120,11 @@ INSERT INTO venues (name) SELECT 'Main Hall' WHERE NOT EXISTS (SELECT 1 FROM ven
 INSERT INTO company_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- New-user trigger (first account = admin; invited = role from invite)
+-- New-user trigger
+--   invited email  -> role/permissions from the invite, active
+--   first account  -> admin, active
+--   anyone else    -> booker, but INACTIVE until an admin turns them on
+--                     (protects you if account sign-ups are ever left open)
 -- ============================================================
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS trigger
@@ -133,6 +137,7 @@ DECLARE
   v_role text;
   v_perms text[] := '{}';
   v_name text;
+  v_active boolean := true;
 BEGIN
   SELECT * INTO v_invite FROM public.invites
     WHERE lower(email) = lower(COALESCE(NEW.email, '')) LIMIT 1;
@@ -146,9 +151,10 @@ BEGIN
     v_role := 'admin';
   ELSE
     v_role := 'booker';
+    v_active := false;
   END IF;
 
-  INSERT INTO public.staff (id, display_name, email, role, permissions)
+  INSERT INTO public.staff (id, display_name, email, role, permissions, is_active)
   VALUES (
     NEW.id,
     COALESCE(
@@ -159,7 +165,8 @@ BEGIN
     ),
     COALESCE(NEW.email, ''),
     v_role,
-    v_perms
+    v_perms,
+    v_active
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;

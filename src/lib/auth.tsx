@@ -8,7 +8,6 @@ interface AuthContextValue {
   staff: Staff | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
   refreshStaff: () => Promise<void>;
 }
@@ -72,13 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error ? error.message : null };
   };
 
-  const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
-    if (error) return { error: error.message, needsConfirmation: false };
-    // No session back => the project requires email confirmation.
-    return { error: null, needsConfirmation: !data.session };
-  };
-
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -86,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshStaff = useCallback(() => loadProfile(user), [loadProfile, user]);
 
   return (
-    <AuthContext.Provider value={{ user, staff, loading, signIn, signUp, signOut, refreshStaff }}>
+    <AuthContext.Provider value={{ user, staff, loading, signIn, signOut, refreshStaff }}>
       {children}
     </AuthContext.Provider>
   );

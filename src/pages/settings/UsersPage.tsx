@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, ShieldCheck, Mail, Copy } from 'lucide-react';
+import { Plus, ShieldCheck, Mail } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth';
 import { Staff } from '../../lib/types';
@@ -150,14 +150,14 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-500">{iv.email}</td>
                     <td className="px-4 py-3 capitalize text-gray-700">{ROLE_PRESETS[iv.role]?.label ?? iv.role}</td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">Applied on sign-up</td>
+                    <td className="px-4 py-3 text-gray-400 text-xs">Applied when created in Supabase</td>
                     <td className="px-4 py-3">
-                      <Badge className="bg-amber-100 text-amber-800 border-amber-200">Pending verification</Badge>
+                      <Badge className="bg-amber-100 text-amber-800 border-amber-200">Account not created yet</Badge>
                     </td>
                     <td className="px-4 py-3">
                       {isAdmin && (
                         <button onClick={() => cancelInvite(iv.id)} className="text-xs font-medium text-red-600 border border-red-200 rounded-lg px-2 py-1 hover:bg-red-50">
-                          Cancel invite
+                          Remove
                         </button>
                       )}
                     </td>
@@ -175,7 +175,7 @@ export default function UsersPage() {
         onClose={() => setAddOpen(false)}
         onSaved={() => {
           setAddOpen(false);
-          success('Invite created. Ask them to sign up with that email.');
+          success('Role reserved. Now create the account in Supabase with that email.');
           load();
         }}
         onError={error}
@@ -216,7 +216,6 @@ function AddUserModal({
   const [name, setName] = useState('');
   const [role, setRole] = useState('booker');
   const [saving, setSaving] = useState(false);
-  const signupUrl = `${window.location.origin}/`;
 
   useEffect(() => {
     if (!open) return;
@@ -250,7 +249,9 @@ function AddUserModal({
     <Modal open={open} onClose={onClose} title="Add user">
       <div className="space-y-4">
         <p className="text-sm text-gray-500">
-          Create an invite, then share the sign-in page. When they sign up with this email they get the role below automatically.
+          This reserves a role for an email. Then create the account in
+          <span className="font-medium text-gray-700"> Supabase → Authentication → Users → Add user </span>
+          with the same email — the role below is applied automatically.
         </p>
         <Field label="Email">
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="person@example.com" />
@@ -263,18 +264,9 @@ function AddUserModal({
             {Object.entries(ROLE_PRESETS).map(([key, r]) => <option key={key} value={key}>{r.label}</option>)}
           </Select>
         </Field>
-        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-500">
-          <span className="truncate flex-1">{signupUrl}</span>
-          <button
-            onClick={() => navigator.clipboard?.writeText(signupUrl)}
-            className="inline-flex items-center gap-1 text-[#8a6d24] font-medium shrink-0"
-          >
-            <Copy className="w-3.5 h-3.5" /> Copy link
-          </button>
-        </div>
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Create invite'}</Button>
+          <Button onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Reserve role'}</Button>
         </div>
       </div>
     </Modal>

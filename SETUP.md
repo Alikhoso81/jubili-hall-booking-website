@@ -1,7 +1,5 @@
 # Setup — JUBLII Booking Manager
 
-Do these steps once, in order.
-
 ## 1. Install dependencies (needs Node.js 18+)
 
 ```bash
@@ -11,82 +9,68 @@ npm run typecheck   # should pass
 npm run dev         # http://localhost:5173
 ```
 
-New packages in this build: `react-router-dom` (page navigation) and
-`recharts` (dashboard charts).
+## 2. Create the database
 
-## 2. Apply the database migrations
+Supabase dashboard → **SQL Editor** → **New query** → paste the entire
+contents of **`supabase/SETUP_FRESH_DATABASE.sql`** → **Run**.
 
-Supabase dashboard → **SQL Editor** → run these two files **in order**:
+(The files in `supabase/migrations/` are the historical step-by-step
+versions — you only need the single `SETUP_FRESH_DATABASE.sql` on a new
+project. Re-running it is safe.)
 
-1. `supabase/migrations/20260909120000_admin_only_supabase_auth.sql`
-   (Supabase Auth + the `staff` table — skip if you already ran it)
-2. `supabase/migrations/20260909140000_venue_management.sql`
-   (venues, the richer bookings model, charges, payments, company
-   settings, roles/permissions, invites)
+## 3. Lock down sign-ups
 
-The second migration reshapes `bookings` (`date`→`event_date`,
-`shift`→`time_slot`, `customer_*`→`client_*`, adds `venue_id`, `status`,
-etc.), moves any existing money values into `charges` / `payments`, and
-creates a default **"Main Hall"** venue for existing bookings.
+Supabase → **Authentication → Sign In / Providers → Email**:
 
-## 3. Auth settings
-
-Supabase dashboard → **Authentication**:
-
-- **Providers → Email:** turn **off** "Confirm email" (so new accounts work
-  right away), or leave it on if you want email verification.
-- **Sign-ups:** leave **enabled** — access is controlled by invites
-  (step 5). The very first account to sign up automatically becomes
-  **Admin**.
+- Turn **OFF** "Allow new users to sign up" — **there is no public
+  sign-up in the app**; you create every account yourself.
+- (Email confirmation setting doesn't matter — accounts you create in the
+  dashboard are auto-confirmed.)
 
 ## 4. Create the owner account
 
-- If you already created an account in the earlier setup, it was upgraded
-  to **Admin** by migration 2 — nothing to do.
-- Otherwise: Authentication → Users → **Add user** (email + password), or
-  just sign up on the app's login screen. First account = Admin.
+Supabase → **Authentication → Users → Add user → Create new user**
+→ your email + password, keep **"Auto Confirm User"** checked.
 
-## 5. Add your team (from inside the app)
+The **first** account created automatically becomes **Admin**.
 
-Sign in, then go to **Settings → Users → Add user**:
+## 5. Add staff — two steps
 
-1. Enter the person's **email**, name, and **role** (Admin / Manager /
-   Booker / Accountant).
-2. Send them the login-page link (the modal shows it with a Copy button).
-3. They sign up with that exact email → they get the role and permissions
-   automatically, and the "Pending verification" row turns into an active
-   member.
+1. In the app: **Settings → Users → Add user** — enter their email + role.
+   This just *reserves* the role.
+2. In Supabase: **Authentication → Users → Add user** — create the account
+   with the **same email**. The reserved role is applied automatically and
+   the "Account not created yet" row becomes an active member.
 
-Fine-tune any member's exact permissions later with **Assign role**, or
-switch them off with **Deactivate**.
+Fine-tune anyone's permissions later with **Assign role**; switch someone
+off with **Deactivate**.
 
-## 6. First run inside the app
+Safety net: if an account is ever created for an email that has no
+reserved role (and isn't the first account), it lands **deactivated** —
+an admin has to turn it on from Settings → Users.
 
-1. **Events → Venues** — rename "Main Hall" / add your other halls.
-2. **Settings → Company Settings** — business name, phone, tax rate, and
-   the Event type / Time slot lists.
-3. **Events → Booking Calendar** — tap a date to make your first booking.
+## 6. First run
+
+1. **Events → Venues** — rename "Main Hall", add your other halls.
+2. **Settings → Company Settings** — name, phone, tax rate, event types.
+3. **Events → Booking Calendar** — tap a date to make a booking.
 
 ## Deploy
 
-Static build — deploy the `project/dist/` folder (Netlify / Vercel /
-Cloudflare Pages). The repo already has a SPA redirect in
-`dist/_redirects`. Set these env vars on the host:
+Static build — deploy `project/dist/` (Netlify / Vercel / Cloudflare
+Pages). Env vars on the host:
 
 ```
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 ```
 
-Build command: `npm run build` · Publish directory: `dist`
+Build command `npm run build` · publish dir `dist` · SPA redirect already
+in `dist/_redirects`.
 
 ## Notes / follow-ups
 
-- **Permissions are enforced in the UI**, not yet in the database. Every
-  signed-in user can technically read/write the tables via the API. Next
-  step is per-permission RLS policies.
+- **Permissions are enforced in the UI**, not yet in the database.
 - **Accounts, Inventory, Finance Vouchers, Financial Reports, Staff &
-  Payroll** are scaffolded ("Module in progress") — navigation,
-  permissions and layout are wired, the screens come next.
+  Payroll** are scaffolded ("Module in progress").
 - **Free-tier pause:** a Supabase free project pauses after ~7 days idle.
-  Upgrade to Pro or add a keep-alive ping when it goes live.
